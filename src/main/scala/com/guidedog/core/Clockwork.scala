@@ -24,7 +24,7 @@ object Clockwork {
    */
   def sendSMS(sms: Sms) = {
 
-    def bundleInfo(oneMessage: String, remaining: List[String]): Unit = {
+   /* def bundleInfo(oneMessage: String, remaining: List): Unit = {
       remaining match {
 
         case head :: tail =>
@@ -40,7 +40,9 @@ object Clockwork {
       }
     }
 
-    bundleInfo("", sms.content)
+    bundleInfo("", ) */
+
+    sms.content.grouped(458).toList.map(sendSms(_))
 
     def sendSms(text: String): Try[Boolean] = {
       val clockworkSms = new SMS(sms.to, text)
@@ -49,5 +51,5 @@ object Clockwork {
       result.map(_.isSuccess)
     }
   }
-  
+
 }

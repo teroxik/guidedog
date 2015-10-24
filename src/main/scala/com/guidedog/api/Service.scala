@@ -3,7 +3,7 @@ package com.guidedog.api
 import akka.actor.ActorRef
 import com.guidedog.PhoneNumber
 import com.guidedog.core.Clockwork
-import com.guidedog.core.NavigationFSM.{AtDestination, InputAddress, NextDirection, SelectOption}
+import com.guidedog.core.NavigationFSM._
 import com.guidedog.model.Sms
 import spray.routing.HttpService
 
@@ -44,11 +44,10 @@ trait Service extends HttpService {
             }
             val command = content.trim.toLowerCase
             if (command == "navigate") {
-              ???
+              navigator ! Navigate
             } else if (command == "next") {
               navigator ! NextDirection
             } else if (command == "finish") {
-              navigator ! AtDestination
             } else {
               Try(content.trim.toInt).toOption.cata(navigator ! SelectOption(_), navigator ! InputAddress(command))
             }
