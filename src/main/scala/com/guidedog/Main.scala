@@ -13,6 +13,7 @@ object Main extends App {
 
   implicit val timeout = Timeout(5.seconds)
   implicit val system = ActorSystem("guidedog")
+  implicit val ec = system.dispatcher
   val navigators = Agent(Map.apply[PhoneNumber, ActorRef]())
   val service = system.actorOf(ServiceActor.props(navigators), "guidedog-service")
 
