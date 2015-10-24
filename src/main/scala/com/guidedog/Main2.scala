@@ -2,18 +2,23 @@ package com.guidedog
 
 import com.guidedog.directions.Directions
 
-import scala.concurrent.Await
-import scala.concurrent.duration._
-
 object Main2 extends App with Directions {
   import scala.concurrent.ExecutionContext.Implicits.global
 
   val origin = "Hatters Hostel, Newton Street, Mancnhester"
   val destination = "Picadilly Station, Manchester"
 
-  val pipo = directions(origin, destination)
+  val pipo = for {
+    x <- lookupLocation(origin)
+    y <- lookupLocation(destination)
+    z <- directions(x.head.placeId, y.head.placeId)
+  } yield {
+      z
+    }
 
-  val result = Await.result(pipo, 30 seconds)
-  println(result(0).toString)
+
+  pipo.onSuccess{case e => println(e)}
+
+  Thread.sleep(15000)
 
 }

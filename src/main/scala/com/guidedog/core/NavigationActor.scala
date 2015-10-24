@@ -73,7 +73,7 @@ object NavigationFSM {
         }
       }
     }
-    
+
     def useStep = this.copy(step = step+1)
 
   }
