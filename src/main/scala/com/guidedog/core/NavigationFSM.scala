@@ -2,6 +2,7 @@ package com.guidedog.core
 
 import akka.actor.{LoggingFSM, FSM, Props}
 import akka.pattern._
+import com.google.maps.model.LatLng
 import com.guidedog.PhoneNumber
 import com.guidedog.directions._
 import com.guidedog.model.Sms
@@ -59,7 +60,7 @@ object NavigationFSM extends Directions {
 
     def selectOrigin(selection: Int) = this.copy(originSelection = origins.flatMap(list => Try(list(selection)).toOption))
 
-    def setDestinations(destination: String) = lookupLocation(destination).map(locations => this.copy(destinations = Some(locations)))
+    def setDestinations(destination: String, latlng: Option[LatLng]) = lookupLocation(destination, latlng).map(locations => this.copy(destinations = Some(locations)))
 
     def selectDestination(selection: Int) = this.copy(destinationSelection = destinations.flatMap(list => Try(list(selection)).toOption))
 
@@ -161,7 +162,7 @@ class NavigationFSM(number : PhoneNumber) extends LoggingFSM[State, Navigation] 
   when(DestinationSelection) {
 
     case Event(InputAddress(address), data) =>
-      data.setDestinations(address).map { newData =>
+      data.setDestinations(address, data.originSelection.map(_.longlat)).map { newData =>
         Locations(newData.destinations.getOrElse(List.empty))
       } pipeTo self
       stay using data
@@ -226,7 +227,7 @@ class NavigationFSM(number : PhoneNumber) extends LoggingFSM[State, Navigation] 
           stay() using data.useStep
         }
         case Nil => {
-          val sms = Sms(to = number, content = "No more instructions left, you should have arrived by now" )
+          val sms = Sms(to = number, content = "You have arrived at your destination, have a nice day." )
           Clockwork.sendSMS(sms)
           stop()
         }
