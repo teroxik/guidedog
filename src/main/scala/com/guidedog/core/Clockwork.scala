@@ -25,7 +25,7 @@ object Clockwork {
   def sendSMS(sms: Sms) = {
 
    def sendSms(text: String): Try[Boolean] = {
-     val clockworkSms = new SMS(sms.to, text)
+     val clockworkSms = new SMS(sms.to, text, "447860033196")
      sms.from.foreach(clockworkSms.setFrom)
      val result = Try(service.send(clockworkSms))
      result.map(_.isSuccess)
