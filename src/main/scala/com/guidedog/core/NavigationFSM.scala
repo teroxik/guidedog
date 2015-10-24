@@ -1,13 +1,14 @@
 package com.guidedog.core
 
-import java.util.concurrent.Future
-
-import akka.actor.FSM
-import com.guidedog.directions.{Location, Step, Directions, Route}
+import akka.actor.{FSM, Props}
+import com.guidedog.PhoneNumber
+import com.guidedog.directions.{Directions, Location, Route, Step}
 
 import scala.util.Try
 
 object NavigationFSM extends Directions {
+
+  def props(number : PhoneNumber) = Props(classOf[NavigationFSM], number)
 
   sealed trait Command
 
@@ -90,7 +91,7 @@ object NavigationFSM extends Directions {
 
 import com.guidedog.core.NavigationFSM._
 
-class NavigationFSM extends FSM[State, Navigation] {
+class NavigationFSM(number : PhoneNumber) extends FSM[State, Navigation] {
 
   startWith(OriginSelection, new Navigation())
 
