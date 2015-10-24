@@ -32,11 +32,11 @@ trait Service extends HttpService {
         parameter("from", "to", "content", "msg_id".?, "keyword".?) { (from, to, content, msg_id, keyword) =>
           complete {
             val command = content.trim.toLowerCase
-            if (content.trim.toLowerCase == "navigate") {
+            if (command == "navigate") {
               ???
-            } else if (content.trim.toLowerCase == "next") {
+            } else if (command == "next") {
               navigation ! NextDirection
-            } else if (content.trim.toLowerCase == "finish") {
+            } else if (command == "finish") {
               navigation ! AtDestination
             } else {
               Try(content.trim.toInt).toOption.cata(navigation ! SelectOption(_), navigation ! InputAddress(command))
