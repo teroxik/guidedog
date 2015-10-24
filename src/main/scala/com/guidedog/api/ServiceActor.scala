@@ -14,7 +14,7 @@ class ServiceActor(val navigators : Agent[Map[PhoneNumber, ActorRef]]) extends A
 
   def receive = runRoute(route)
 
-  override def createNavigator(number: PhoneNumber): ActorRef = context.actorOf(Props[NavigationFSM])
+  override def createNavigator(number: PhoneNumber): ActorRef = context.actorOf(NavigationFSM.props(number))
 
 }
 

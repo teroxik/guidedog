@@ -3,7 +3,7 @@ package com.guidedog.core
 import com.clockworksms.{SMS, InvalidCharacterActionEnum, ClockWorkSmsService}
 import com.guidedog.model.Sms
 
-import scala.util.{Failure, Try}
+import scala.util.{Success, Failure, Try}
 
 object Clockwork {
 
