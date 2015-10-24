@@ -16,8 +16,9 @@ object Main2 extends App with Directions {
       z
     }
 
-  pipo.foreach(_.foreach(println))
 
-  Thread.sleep(5000)
+  pipo.onSuccess{case e => println(e)}
+
+  Thread.sleep(15000)
 
 }
