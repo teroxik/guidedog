@@ -1,5 +1,7 @@
 package com.guidedog.core
 
+import java.util.concurrent.Future
+
 import akka.actor.FSM
 import com.guidedog.directions.{Location, Step, Directions, Route}
 
@@ -35,23 +37,31 @@ object NavigationFSM extends Directions {
   case object Navigation extends State
 
 
-  final case class Navigation(origin: Option[List[Location]] = None,
+  final case class Navigation(origins: Option[List[Location]] = None,
                               originSelection: Option[Location] = None,
-                              destination: Option[List[Location]] = None,
+                              destinations: Option[List[Location]] = None,
                               destinationSelection: Option[Location] = None,
                               routes: Option[List[Route]] = None,
                               routeSelection: Option[Route] = None,
-                              remainingSteps : List[Step]) {
+                              remainingSteps : List[Step] = None) {
 
-    def setOrigin(newOrigin: Location) = this.copy(origin = Some(List(newOrigin)))
+    def setOrigins(origin: String) = lookupLocation(origin).map(locations => this.copy(origins = Some(locations)))
 
-    def selectOrigin(selection: Int) = this.copy(originSelection = origin.flatMap(list => Try(list(selection)).toOption))
+    def selectOrigin(selection: Int) = this.copy(originSelection = origins.flatMap(list => Try(list(selection)).toOption))
 
-    def setDestination(newDestination: String) = this.copy(destination = Some(List(newDestination)))
+    def setDestinations(destination: String) = lookupLocation(destination).map(locations => this.copy(destinations = Some(locations)))
 
-    def selectDestination(selection: Int) = this.copy(destinationSelection = Some(selection))
+    def selectDestination(selection: Int) = this.copy(originSelection = destinations.flatMap(list => Try(list(selection)).toOption))
 
-    def selectedDestination: Option[String] = destinationSelection.flatMap(selection => destination.map(dest => dest(selection)))
+    def setRoutes() = {
+      for {
+      origin <- originSelection
+      destination <- destinationSelection }
+      yield directions(origin.placeId,destination.placeId).
+    }
+
+    def selectDestination(selection: Int) = this.copy(originSelection = destinations.flatMap(list => Try(list(selection)).toOption))
+
 
     def setRoutes(routes: List[Route]) = this.copy(routes = Some(routes))
 
@@ -86,7 +96,7 @@ class NavigationFSM extends FSM[State, Navigation] {
 
   when(OriginSelection) {
     case Event(InputAddress(address), data) =>
-      stay using data.setOrigin(address)
+      stay using data.setOrigins(address)
     case Event(SelectOption(option), data) =>
       goto(DestinationSelection) using data.selectOrigin(option)
   }
