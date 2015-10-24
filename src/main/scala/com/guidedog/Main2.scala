@@ -11,8 +11,16 @@ object Main2 extends App with Directions {
   val origin = "Hatters Hostel, Newton Street, Mancnhester"
   val destination = "Picadilly Station, Manchester"
 
-  val pipo = directions(origin, destination)
+  val pipo = for {
+    x <- lookupLocation(origin)
+    y <- lookupLocation(destination)
+    z <- directions(x.head.placeId, y.head.placeId)
+  } yield {
+      z
+    }
 
-  val result = Await.result(pipo, 5 seconds)
+  pipo.foreach(_.foreach(println))
+
+  Thread.sleep(5000)
 
 }
