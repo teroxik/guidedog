@@ -22,11 +22,30 @@ object Clockwork {
    * @param sms the sms to be sent
    * @return message delivered successfully wrapped in ``Try``
    */
-  def sendSMS(sms: Sms): Try[Boolean] = {
-    if (sms.content.length > 459) {
-      Failure(new Throwable("Message length exceeds 459."))
-    } else {
-      val clockworkSms = new SMS(sms.to, sms.content)
+  def sendSMS(sms: Sms) = {
+
+   /* def bundleInfo(oneMessage: String, remaining: List): Unit = {
+      remaining match {
+
+        case head :: tail =>
+          if (oneMessage.length + remaining.head.length + 1 < 459)
+            bundleInfo(s"$oneMessage ${remaining.head}", tail)
+          else {
+            sendSms(oneMessage)
+            bundleInfo(head, tail)
+          }
+
+        case List.empty =>
+          sendSms(oneMessage)
+      }
+    }
+
+    bundleInfo("", ) */
+
+    sms.content.grouped(458).toList.map(sendSms(_))
+
+    def sendSms(text: String): Try[Boolean] = {
+      val clockworkSms = new SMS(sms.to, text)
       sms.from.foreach(clockworkSms.setFrom)
       val result = Try(service.send(clockworkSms))
       result.map(_.isSuccess)
