@@ -1,0 +1,17 @@
+
+# sbt
+
+target/
+project/project/*
+project/target/*
+
+# IntelliJ Idea
+
+.idea/
+
+# Mac OS
+.DS_Store
+
+# Binaries 
+*.class
+*.pyc
