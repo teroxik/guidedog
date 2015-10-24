@@ -13,6 +13,7 @@ object Main2 extends App with Directions {
 
   val pipo = directions(origin, destination)
 
-  val result = Await.result(pipo, 5 seconds)
+  val result = Await.result(pipo, 30 seconds)
+  println(result(0).toString)
 
 }

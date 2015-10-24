@@ -17,7 +17,8 @@ trait Directions {
       .units(com.google.maps.model.Unit.METRIC)
       .region("uk")
       .origin(origin)
-      .destination(destination)
+      .destination(destination).await()
+    req
   }
 
 }
