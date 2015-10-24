@@ -45,7 +45,7 @@ trait Service extends HttpService {
             val command = content.trim.toLowerCase
             if (command == "navigate") {
               navigator ! Navigate
-            } else if (command == "next") {
+            } else if (command == "next" || command == "n") {
               navigator ! NextDirection
             } else if (command == "finish") {
             } else {
