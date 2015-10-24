@@ -1,10 +1,11 @@
 package com.guidedog.core
 
-import akka.actor.{ActorRef, FSM}
-import com.google.maps.model.DirectionsRoute
-import scala.concurrent.duration._
+import akka.actor.FSM
+import com.guidedog.directions.{Location, Step, Directions, Route}
 
-object NavigationFSM {
+import scala.util.Try
+
+object NavigationFSM extends Directions {
 
   sealed trait Command
 
@@ -34,20 +35,17 @@ object NavigationFSM {
   case object Navigation extends State
 
 
-  final case class Navigation(origin: Option[List[String]] = None,
-                              originSelection: Option[Int] = None,
-                              destination: Option[List[String]] = None,
-                              destinationSelection: Option[Int] = None,
-                              routes: Option[List[DirectionsRoute]] = None,
-                              routeSelection: Option[Int] = None,
-                              leg: Int = 0,
-                              step: Int = 0) {
+  final case class Navigation(origin: Option[List[Location]] = None,
+                              originSelection: Option[Location] = None,
+                              destination: Option[List[Location]] = None,
+                              destinationSelection: Option[Location] = None,
+                              routes: Option[List[Route]] = None,
+                              routeSelection: Option[Route] = None,
+                              remainingSteps : List[Step]) {
 
-    def setOrigin(newOrigin: String) = this.copy(origin = Some(List(newOrigin)))
+    def setOrigin(newOrigin: Location) = this.copy(origin = Some(List(newOrigin)))
 
-    def selectOrigin(selection: Int) = this.copy(originSelection = Some(selection))
-
-    def selectedOrigin: Option[String] = originSelection.flatMap(selection => origin.map(orig => orig(selection)))
+    def selectOrigin(selection: Int) = this.copy(originSelection = origin.flatMap(list => Try(list(selection)).toOption))
 
     def setDestination(newDestination: String) = this.copy(destination = Some(List(newDestination)))
 
@@ -55,32 +53,32 @@ object NavigationFSM {
 
     def selectedDestination: Option[String] = destinationSelection.flatMap(selection => destination.map(dest => dest(selection)))
 
-    def setRoutes(routes: List[DirectionsRoute]) = this.copy(routes = Some(routes))
+    def setRoutes(routes: List[Route]) = this.copy(routes = Some(routes))
 
     def selectRoute(selection: Int) = this.copy(routeSelection = Some(selection))
 
-    def selectedRoute: Option[DirectionsRoute] = routeSelection.flatMap(selection => routes.map(dest => dest(selection)))
+    def selectedRoute: Option[Route] = routeSelection.flatMap(selection => routes.map(dest => dest(selection)))
 
-    def getCurrentDirection() = {
-      selectedRoute.map {
-        route => {
-          if (leg < route.legs.length && route.legs(leg).steps.length < step) {
-            route.legs(leg).steps(step)
-          }
-          else {
-            None
-          }
-        }
-      }
-    }
+//    def getCurrentDirection() = {
+//      selectedRoute.map {
+//        route => {
+//          if (leg < route.legs.length && route.legs(leg).steps.length < step) {
+//            route.legs(leg).steps(step)
+//          }
+//          else {
+//            None
+//          }
+//        }
+//      }
+//    }
 
-    def useStep = this.copy(step = step+1)
+    def useStep = this.copy(remainingSteps = remainingSteps.tail)
 
   }
 
 }
 
-import NavigationFSM._
+import com.guidedog.core.NavigationFSM._
 
 class NavigationFSM extends FSM[State, Navigation] {
 
@@ -107,7 +105,7 @@ class NavigationFSM extends FSM[State, Navigation] {
 
   when(Navigation) {
     case Event(NextDirection, data) =>
-      stay using data.
+      stay using data
     case Event(AtDestination, _) =>
       stop()
   }
