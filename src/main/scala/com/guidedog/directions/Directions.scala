@@ -1,7 +1,7 @@
 package com.guidedog.directions
 
 import com.google.maps.model.TravelMode
-import com.google.maps.{GeocodingApi, DirectionsApi, GeoApiContext}
+import com.google.maps.{DirectionsApi, GeoApiContext, GeocodingApi}
 
 import scala.concurrent.{ExecutionContext, Future}
 

@@ -2,9 +2,6 @@ package com.guidedog
 
 import com.guidedog.directions.Directions
 
-import scala.concurrent.Await
-import scala.concurrent.duration._
-
 object Main2 extends App with Directions {
   import scala.concurrent.ExecutionContext.Implicits.global
 
