@@ -23,10 +23,6 @@ object Clockwork {
    * @return message delivered successfully wrapped in ``Try``
    */
   def sendSMS(sms: Sms): Try[Boolean] = {
-    println("===========================================================")
-    println(sms.content)
-    println("===========================================================")
-    return Success(true)
     if (sms.content.length > 459) {
       Failure(new Throwable("Message length exceeds 459."))
     } else {
