@@ -17,3 +17,9 @@ class ServiceActor(val navigators : Agent[Map[PhoneNumber, ActorRef]]) extends A
   override def createNavigator(number: PhoneNumber): ActorRef = context.actorOf(Props[NavigationFSM])
 
 }
+
+object ServiceActor{
+
+  def props(navigators : Agent[Map[PhoneNumber, ActorRef]]) = Props(new ServiceActor(navigators))
+
+}
