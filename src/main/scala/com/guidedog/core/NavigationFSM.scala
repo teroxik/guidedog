@@ -1,6 +1,6 @@
 package com.guidedog.core
 
-import akka.actor.{FSM, Props}
+import akka.actor.{LoggingFSM, FSM, Props}
 import akka.pattern._
 import com.guidedog.PhoneNumber
 import com.guidedog.directions._
@@ -11,7 +11,7 @@ import scala.util.Try
 
 object NavigationFSM extends Directions {
 
-  def props(number : PhoneNumber) = Props(classOf[NavigationFSM], number)
+  def props(number : PhoneNumber) = Props(new NavigationFSM(number))
 
   sealed trait Command
 
@@ -61,7 +61,7 @@ object NavigationFSM extends Directions {
 
     def setDestinations(destination: String) = lookupLocation(destination).map(locations => this.copy(destinations = Some(locations)))
 
-    def selectDestination(selection: Int) = this.copy(originSelection = destinations.flatMap(list => Try(list(selection)).toOption))
+    def selectDestination(selection: Int) = this.copy(destinationSelection = destinations.flatMap(list => Try(list(selection)).toOption))
 
     def getRoutes() = {
       for {
@@ -73,7 +73,11 @@ object NavigationFSM extends Directions {
       }
     }
 
-    def selectRoute(selection: Int) = this.copy(routeSelection = routes.flatMap(list => Try(list(selection)).toOption))
+    def selectRoute(selection: Int) = {
+      val route = routes.flatMap(list => Try(list(selection)).toOption)
+      val steps = route.flatMap(r => Try(r.asInstanceOf[RouteFound]).map(_.instructions).toOption)
+      this.copy(routeSelection = route, remainingSteps = steps)
+    }
 
     def useStep = this.copy(remainingSteps = remainingSteps.map(rs => rs.tail))
 
@@ -83,20 +87,28 @@ object NavigationFSM extends Directions {
 
 import com.guidedog.core.NavigationFSM._
 
-class NavigationFSM(number : PhoneNumber) extends FSM[State, Navigation] {
+class NavigationFSM(number : PhoneNumber) extends LoggingFSM[State, Navigation] {
 
-  startWith(OriginSelection, new Navigation())
+//  val mockOrigin = Some(Location(PlaceId("ChIJJ119P7FSekgRZCgb7kOayfA"), "Deansgate, Manchester, Manchester, UK"))
+//  val mockDestinations = Some(List(Location(PlaceId("ChIJ-c3j-cKxe0gRhjnZmHgmn0I"), "Deansgate, Manchester, Manchester, UK")))
+//  val mockStateData = Navigation(originSelection = mockOrigin, destinations = mockDestinations)
+
+//  startWith(DestinationSelection, mockStateData)
+  startWith(WaitingForNavigate, new Navigation())
 
   onTransition {
     case OriginSelection -> DestinationSelection => {
       val sms = Sms(to = number, content = "Where to ?")
       Clockwork.sendSMS(sms)
     }
-    case DestinationSelection -> RouteSelection =>
+    case DestinationSelection -> RouteSelection => {
       nextStateData.getRoutes() match {
-        case Some(future) => future.map(Routes(_)).pipeTo(self)
+        case Some(future) =>
+          future.map(x =>
+            Routes(x)).pipeTo(self)
         case None => self ! Routes(List.empty)
       }
+    }
     case RouteSelection -> Guide => {
       val sms = Sms(to = number, content = "Route selected, send \"next\" to start receiving instructions")
       Clockwork.sendSMS(sms)
@@ -172,8 +184,7 @@ class NavigationFSM(number : PhoneNumber) extends FSM[State, Navigation] {
       val newState = data.selectDestination(option)
       newState.destinationSelection match {
         case Some(origin) =>
-          goto(DestinationSelection) using data.selectOrigin(option)
-          goto(RouteSelection) using data
+          goto(RouteSelection) using newState
         case None =>
           val sms = Sms(to = number, content = "Wrong input, try again")
           Clockwork.sendSMS(sms)
@@ -212,20 +223,13 @@ class NavigationFSM(number : PhoneNumber) extends FSM[State, Navigation] {
           val content = s"${step.instruction}, for ${step.distance} (${step.duration}})"
           val sms = Sms(to = number, content = content )
           Clockwork.sendSMS(sms)
+          stay() using data.useStep
         }
         case Nil => {
           val sms = Sms(to = number, content = "No more instructions left, you should have arrived by now" )
           Clockwork.sendSMS(sms)
+          stop()
         }
-      }
-
-      val newData = data.useStep
-      if (newData.remainingSteps.isEmpty) {
-        val sms = Sms(to = number, content = "You have arrived, enjoy the rest of your day :)" )
-        Clockwork.sendSMS(sms)
-        stop()
-      } else {
-        stay using data
       }
   }
 
