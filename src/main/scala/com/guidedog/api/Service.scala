@@ -34,6 +34,7 @@ trait Service extends HttpService {
         parameter("from", "to", "content", "msg_id".?, "keyword".?) { (from, to, content, msg_id, keyword) =>
           complete {
             val sms = Sms(Some(from), to, content, msg_id, keyword)
+            println(s"RECEIVED SMS : $sms")
             val navigator = {
               val maybeNav = navigators.get.get(from)
               maybeNav.getOrElse {
