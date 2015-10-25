@@ -185,7 +185,7 @@ class NavigationFSM(number: PhoneNumber) extends LoggingFSM[State, Navigation] {
       else {
         list.head match {
           case r@RouteFound(distance, duration, steps) =>
-            val sms = Sms(to = number, content = s"Route found : $distance ($duration). \n Send \"next\" to start receiving instructions")
+            val sms = Sms(to = number, content = "Route found : " + distance + " " + duration + ". Send \"next\" to start receiving instructions")
             Clockwork.sendSMS(sms)
             goto(Guide) using data.copy(remainingSteps = Some(steps))
         }
