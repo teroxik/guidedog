@@ -54,11 +54,11 @@ object NavigationFSM extends Directions {
 
     def setOrigins(origin: String) = lookupLocation(origin).map(locations => this.copy(origins = Some(locations)))
 
-    def selectOrigin(selection: Int) = this.copy(originSelection = origins.flatMap(list => Try(list(selection)).toOption))
+    def selectOrigin(selection: Int) = this.copy(originSelection = origins.flatMap(list => Try(list(selection - 1)).toOption))
 
     def setDestinations(destination: String, latlng: Option[LatLng]) = lookupLocation(destination, latlng).map(locations => this.copy(destinations = Some(locations)))
 
-    def selectDestination(selection: Int) = this.copy(destinationSelection = destinations.flatMap(list => Try(list(selection)).toOption))
+    def selectDestination(selection: Int) = this.copy(destinationSelection = destinations.flatMap(list => Try(list(selection - 1)).toOption))
 
     def fetchRoutes() = {
       for {
