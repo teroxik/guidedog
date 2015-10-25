@@ -227,11 +227,18 @@ class NavigationFSM(number : PhoneNumber) extends LoggingFSM[State, Navigation] 
           stay() using data.useStep
         }
         case Nil => {
-          val sms = Sms(to = number, content = "You have arrived at your destination, have a nice day." )
+          val sms = Sms(to = number, content = "You have arrived at your destination, thanks for using GuideDog, have a nice day." )
           Clockwork.sendSMS(sms)
-          stop()
+          stay()
         }
       }
+  }
+
+  whenUnhandled {
+    case Event(Navigate, _) =>
+      val sms = Sms(to = number, content = "Where from ?")
+      Clockwork.sendSMS(sms)
+      goto(OriginSelection) using new Navigation()
   }
 
 }
