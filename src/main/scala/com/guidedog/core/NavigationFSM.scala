@@ -83,7 +83,7 @@ class NavigationFSM(number: PhoneNumber) extends LoggingFSM[State, Navigation] {
 
   onTransition {
     case OriginSelection -> DestinationSelection => {
-      val sms = Sms(to = number, content = "Where to ?")
+      val sms = Sms(to = number, content = "Where do you want to go ?")
       Clockwork.sendSMS(sms)
     }
     case DestinationSelection -> Guide => {
@@ -99,7 +99,7 @@ class NavigationFSM(number: PhoneNumber) extends LoggingFSM[State, Navigation] {
 
   when(WaitingForNavigate) {
     case Event(Navigate, data) =>
-      val sms = Sms(to = number, content = "Where from ?")
+      val sms = Sms(to = number, content = "Woof ! I'm Guide Dog. Where are you now ?")
       Clockwork.sendSMS(sms)
       goto(OriginSelection) using data
   }
@@ -114,14 +114,14 @@ class NavigationFSM(number: PhoneNumber) extends LoggingFSM[State, Navigation] {
 
     case Event(Locations(list), data) =>
       if (list.isEmpty) {
-        val sms = Sms(to = number, content = "Could not find the location")
+        val sms = Sms(to = number, content = "I'm sorry, could not find the location")
         Clockwork.sendSMS(sms)
         stay using data
       }
       else {
-        val locations = list.zipWithIndex
+        val locations = list.zipWithIndex.map{case (a,b) => (a, b +1)}
         val locationsAsStrings = locations.map(x => s"${x._2}:${x._1.formattedAddress}")
-        val sms = Sms(to = number, content = ("Pick one  " :: locationsAsStrings).mkString("\n"))
+        val sms = Sms(to = number, content = ("Pick one of these options by sending its number" :: locationsAsStrings).mkString("\n"))
         Clockwork.sendSMS(sms)
         stay using data.copy(origins = Some(list))
       }
@@ -132,7 +132,7 @@ class NavigationFSM(number: PhoneNumber) extends LoggingFSM[State, Navigation] {
         case Some(origin) =>
           goto(DestinationSelection) using data.selectOrigin(option)
         case None =>
-          val sms = Sms(to = number, content = "Wrong input, try again")
+          val sms = Sms(to = number, content = "Pick a number from the list,  try again")
           Clockwork.sendSMS(sms)
           stay using data
       }
@@ -149,7 +149,7 @@ class NavigationFSM(number: PhoneNumber) extends LoggingFSM[State, Navigation] {
 
     case Event(Locations(list), data) =>
       if (list.isEmpty) {
-        val sms = Sms(to = number, content = "Could not find the location")
+        val sms = Sms(to = number, content = "I'm sorry, could not find the location")
         Clockwork.sendSMS(sms)
         stay using data
       }
@@ -167,7 +167,7 @@ class NavigationFSM(number: PhoneNumber) extends LoggingFSM[State, Navigation] {
         case Some(origin) =>
           goto(Guide) using newState
         case None =>
-          val sms = Sms(to = number, content = "Wrong input, try again")
+          val sms = Sms(to = number, content = "Pick a number from the list,  try again")
           Clockwork.sendSMS(sms)
           stay using data
       }
@@ -178,14 +178,14 @@ class NavigationFSM(number: PhoneNumber) extends LoggingFSM[State, Navigation] {
   when(Guide) {
     case Event(Routes(list), data) =>
       if (list.isEmpty) {
-        val sms = Sms(to = number, content = "Couldn't find a route, sorry")
+        val sms = Sms(to = number, content = "I couldn't find a route, sorry")
         Clockwork.sendSMS(sms)
         stay using data
       }
       else {
         list.head match {
           case r@RouteFound(distance, duration, steps) =>
-            val sms = Sms(to = number, content = "Route selected, send \"next\" to start receiving instructions")
+            val sms = Sms(to = number, content = s"Route found : $distance ($duration). \n Send \"next\" to start receiving instructions")
             Clockwork.sendSMS(sms)
             goto(Guide) using data.copy(remainingSteps = Some(steps))
         }
@@ -200,7 +200,7 @@ class NavigationFSM(number: PhoneNumber) extends LoggingFSM[State, Navigation] {
           stay() using data.useStep
         }
         case Nil => {
-          val sms = Sms(to = number, content = "You have arrived at your destination, thanks for using GuideDog, have a nice day.")
+          val sms = Sms(to = number, content = "You have arrived at your destination. Am I a good dog ? Have a nice day !")
           Clockwork.sendSMS(sms)
           stay()
         }
@@ -209,7 +209,7 @@ class NavigationFSM(number: PhoneNumber) extends LoggingFSM[State, Navigation] {
 
   whenUnhandled {
     case Event(Navigate, _) =>
-      val sms = Sms(to = number, content = "Where from ?")
+      val sms = Sms(to = number, content = "Where are you now ?")
       Clockwork.sendSMS(sms)
       goto(OriginSelection) using new Navigation()
   }
